@@ -1,5 +1,7 @@
 package org.example.server.models;
 
+import org.example.server.models.enums.ERole;
+
 import javax.persistence.*;
 
 @Entity
@@ -11,14 +13,14 @@ public class Role {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 20)
-    private ERole name;
+    @Column(length = 20, nullable = false)
+    private ERole value;
 
     public Role() {
     }
 
-    public Role(ERole name) {
-        this.name = name;
+    public Role(ERole value) {
+        this.value = value;
     }
 
     public Long getId() {
@@ -29,11 +31,11 @@ public class Role {
         this.id = id;
     }
 
-    public ERole getName() {
-        return name;
+    public ERole getValue() {
+        return value;
     }
 
-    public void setName(ERole name) {
-        this.name = name;
+    public void setValue(ERole value) {
+        this.value = value;
     }
 }

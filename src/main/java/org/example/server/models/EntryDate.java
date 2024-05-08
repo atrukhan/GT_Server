@@ -1,27 +1,24 @@
 package org.example.server.models;
 
 import javax.persistence.*;
-
+import java.util.Date;
 
 @Entity
-@Table(name = "refresh_tokens")
-public class RefreshToken {
-
+@Table(name = "entry_dates")
+public class EntryDate {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-
+    @Temporal(TemporalType.TIMESTAMP)
     @Column(nullable = false)
-    private String token;
-    @OneToOne(targetEntity = User.class, fetch = FetchType.LAZY)
-    @JoinColumn(nullable = false, name = "user_id")
+    private Date date;
+
+    @ManyToOne
+    @JoinColumn(name="user_id")
     private User user;
 
-    public RefreshToken() {
-    }
-
-    public RefreshToken(String token, User user) {
-        this.token = token;
+    public EntryDate(Date date, User user) {
+        this.date = date;
         this.user = user;
     }
 
@@ -33,12 +30,12 @@ public class RefreshToken {
         this.id = id;
     }
 
-    public String getToken() {
-        return token;
+    public Date getDate() {
+        return date;
     }
 
-    public void setToken(String token) {
-        this.token = token;
+    public void setDate(Date date) {
+        this.date = date;
     }
 
     public User getUser() {

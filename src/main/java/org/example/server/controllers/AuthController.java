@@ -1,7 +1,7 @@
 package org.example.server.controllers;
 
 import org.example.server.config.jwt.JwtUtils;
-import org.example.server.models.ERole;
+import org.example.server.models.enums.ERole;
 import org.example.server.models.Role;
 import org.example.server.models.RefreshToken;
 import org.example.server.models.User;
@@ -25,6 +25,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.HashSet;
 import java.util.List;
@@ -73,7 +74,7 @@ public class AuthController {
         User user = userRepository.findById(userDetails.getId())
                 .orElseThrow(() -> new UsernameNotFoundException("User Not Found with id: " + userDetails.getId()));
 
-        if(!user.getEnabled()){
+        if(!user.getActivated()){
             return ResponseEntity.badRequest()
                     .body(new JwtResponse(
                             null,
@@ -88,17 +89,22 @@ public class AuthController {
         String jwtAccess = jwtUtils.generateJwtAccessToken(authentication);
         String jwtRefresh = jwtUtils.generateJwtRefreshToken(authentication);
 
-        Cookie cookie = new Cookie("jwt", jwtRefresh);
-        cookie.setMaxAge(jwtUtils.getJwtRefreshExpirationMs() / 1000);
+
+//        Cookie cookie = new Cookie("jwt", jwtRefresh);
+//        cookie.setMaxAge(jwtUtils.getJwtRefreshExpirationMs() / 1000);
+        Cookie cookie = new Cookie("jwt", jwtAccess);
+        cookie.setMaxAge(jwtUtils.getJwtAccessExpirationMs() / 1000);
+        cookie.setPath("/api/user/");
         cookie.setSecure(true);
         cookie.setHttpOnly(true);
 
-        RefreshToken token = new RefreshToken(jwtRefresh, user);
-        tokenRepository.save(token);
+//        RefreshToken token = new RefreshToken(jwtRefresh, user);
+//        tokenRepository.save(token);
 
         response.addCookie(cookie);
 
-        return ResponseEntity.ok(new JwtResponse(jwtAccess,
+//        return ResponseEntity.ok(new JwtResponse(jwtAccess,
+        return ResponseEntity.ok(new JwtResponse(jwtRefresh,
                 userDetails.getId(),
                 userDetails.getNickname(),
                 userDetails.getEmail(),
@@ -115,40 +121,32 @@ public class AuthController {
                     .body(new MessageResponse("Error: Email is exist"));
         }
 
-        User user = new User(req.getNickname(), req.getEmail(), passwordEncoder.encode(req.getPassword()), false);
+        User user = new User(req.getNickname(), req.getEmail(), passwordEncoder.encode(req.getPassword()), false, null);
 
-        Set<String> reqRoles = req.getRoles();
         Set<Role> roles = new HashSet<>();
 
-        if (reqRoles == null) {
-            Role userRole = roleRepository
-                    .findByName(ERole.ROLE_USER)
-                    .orElseThrow(() -> new RuntimeException("Error, Role USER is not found"));
-            roles.add(userRole);
-        } else {
-            reqRoles.forEach(r -> {
-                switch (r) {
-                    case "admin":
-                        Role adminRole = roleRepository
-                                .findByName(ERole.ROLE_ADMIN)
-                                .orElseThrow(() -> new RuntimeException("Error, Role ADMIN is not found"));
-                        roles.add(adminRole);
+        Role userRole = roleRepository
+                .findByValue(ERole.ROLE_USER)
+                .orElseThrow(() -> new RuntimeException("Error, Role USER is not found"));
 
-                        break;
-                    default:
-                        Role userRole = roleRepository
-                                .findByName(ERole.ROLE_USER)
-                                .orElseThrow(() -> new RuntimeException("Error, Role USER is not found"));
-                        roles.add(userRole);
-                }
-            });
-        }
+        roles.add(userRole);
+
 
         user.setRoles(roles);
 
         return userService.saveUser(user);
+    }
 
-//        return ResponseEntity.ok(new MessageResponse("User CREATED"));
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletResponse response){
+        Cookie cookie = new Cookie("jwt", " ");
+        cookie.setMaxAge(1);
+        cookie.setPath("/api/user/");
+        cookie.setSecure(true);
+        cookie.setHttpOnly(true);
+
+        response.addCookie(cookie);
+        return ResponseEntity.ok(new MessageResponse("Logout"));
     }
 
     @RequestMapping(value="/confirm-account", method= {RequestMethod.GET, RequestMethod.POST})

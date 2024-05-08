@@ -41,7 +41,7 @@ public class UserService {
         {
             User user = userRepository.findById(token.getUser().getId())
                     .orElseThrow(() -> new UsernameNotFoundException("User Not Found with id: " + token.getUser().getId()));
-            user.setEnabled(true);
+            user.setActivated(true);
             userRepository.save(user);
             confirmationTokenRepository.delete(token);
             return ResponseEntity.ok("Email verified successfully!");

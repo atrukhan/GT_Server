@@ -1,27 +1,21 @@
-package org.example.server.models;
+package org.example.server.pojo;
 
-import javax.persistence.*;
+import javax.persistence.Column;
 
-@Entity
-@Table(name = "word_cards")
-public class WordCard {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+public class CardResponse {
     private Long id;
-
-    @Column(nullable = false)
     private String value;
-
     private String transcription;
-
-    @Column(nullable = false)
     private String translation;
-
     private String example;
 
 
-    public WordCard() {
+    public CardResponse(Long id, String value, String transcription, String translation, String example) {
+        this.id = id;
+        this.value = value;
+        this.transcription = transcription;
+        this.translation = translation;
+        this.example = example;
     }
 
     public Long getId() {

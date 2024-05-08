@@ -26,6 +26,9 @@ public class JwtUtils {
     private int jwtRefreshExpirationMs;
 
     public int getJwtRefreshExpirationMs(){
+        return jwtRefreshExpirationMs;
+    }
+    public int getJwtAccessExpirationMs(){
         return jwtAccessExpirationMs;
     }
 
@@ -38,6 +41,13 @@ public class JwtUtils {
                 .signWith(SignatureAlgorithm.HS512, jwtAccessSecret).compact();
     }
 
+    public String generateJwtAccessTokenUseRefresh(String email) {
+
+        return Jwts.builder().setSubject((email)).setIssuedAt(new Date())
+                .setExpiration(new Date((new Date()).getTime() + jwtAccessExpirationMs))
+                .signWith(SignatureAlgorithm.HS512, jwtAccessSecret).compact();
+    }
+
     public String generateJwtRefreshToken(Authentication authentication) {
 
         UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
@@ -45,6 +55,7 @@ public class JwtUtils {
         return Jwts.builder().setSubject((userPrincipal.getEmail())).setIssuedAt(new Date())
                 .setExpiration(new Date((new Date()).getTime() + jwtRefreshExpirationMs))
                 .signWith(SignatureAlgorithm.HS512, jwtRefreshSecret).compact();
+
     }
 
     public boolean validateJwtToken(String jwt) {
@@ -59,9 +70,25 @@ public class JwtUtils {
 
         return false;
     }
+    public boolean validateRefreshJwtToken(String jwt) {
+        try {
+            Jwts.parser().setSigningKey(jwtRefreshSecret).parseClaimsJws(jwt);
+            return true;
+        } catch (MalformedJwtException e) {
+            System.err.println(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            System.err.println(e.getMessage());
+        }
+
+        return false;
+    }
 
     public String getEmailFromJwtToken(String jwt) {
         return Jwts.parser().setSigningKey(jwtAccessSecret).parseClaimsJws(jwt).getBody().getSubject();
+    }
+
+    public String getEmailFromRefreshJwtToken(String jwt) {
+        return Jwts.parser().setSigningKey(jwtRefreshSecret).parseClaimsJws(jwt).getBody().getSubject();
     }
 
 }
