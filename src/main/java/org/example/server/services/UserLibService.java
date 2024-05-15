@@ -36,7 +36,7 @@ public class UserLibService {
     @Autowired
     private CardRepository cardRepository;
 
-    private String generateCode(int libType, long id){
+    public String generateCode(int libType, long id){
         MessageDigest md = null;
         String res = null;
         String in = String.valueOf(libType).concat(String.valueOf(id));

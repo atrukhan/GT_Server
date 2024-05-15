@@ -3,6 +3,7 @@ package org.example.server;
 import org.example.server.models.*;
 import org.example.server.models.enums.ERole;
 import org.example.server.repositories.*;
+import org.example.server.services.UserLibService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -30,6 +31,9 @@ public class ServerApplication implements CommandLineRunner {
 	@Autowired
 	TrainingRepository trainingRepository;
 
+	@Autowired
+	UserLibService userLibService;
+
 	public static void main(String[] args) {
 		SpringApplication.run(ServerApplication.class, args);
 	}
@@ -48,12 +52,18 @@ public class ServerApplication implements CommandLineRunner {
 
 
 
-		DefaultLibrary ld1 = defaultLibraryRepository.save(new DefaultLibrary("Lib-1", "00000"));
-		DefaultLibrary ld2 = defaultLibraryRepository.save(new DefaultLibrary("Lib-2", "11111"));
+		DefaultLibrary ld1 = defaultLibraryRepository.save(new DefaultLibrary("Lib-1", ""));
+		ld1.setCode(userLibService.generateCode(0, ld1.getId()));
+		defaultLibraryRepository.save(ld1);
+		DefaultLibrary ld2 = defaultLibraryRepository.save(new DefaultLibrary("Lib-2", ""));
+		ld2.setCode(userLibService.generateCode(0, ld2.getId()));
+		defaultLibraryRepository.save(ld2);
 
 
 
-		UserLibrary userLibrary = userLibraryRepository.save(new UserLibrary("User lib", "code", user));
+		UserLibrary userLibrary = userLibraryRepository.save(new UserLibrary("User lib", "", user));
+		userLibrary.setCode(userLibService.generateCode(1, userLibrary.getId()));
+		userLibraryRepository.save(userLibrary);
 
 		Training t1 = new Training(1, 1, true, null, new Date(), userLibrary, null);
 		Training t2 = new Training(3, 2, false, null, new Date(), userLibrary, null);
