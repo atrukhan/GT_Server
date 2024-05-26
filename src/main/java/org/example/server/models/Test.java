@@ -38,6 +38,15 @@ public class Test {
     public Test() {
     }
 
+    public Test(Integer mistakesCount, Integer cardsCount, Boolean isFull, Date date, User user, List<UserLibrary> libraries) {
+        this.mistakesCount = mistakesCount;
+        this.cardsCount = cardsCount;
+        this.isFull = isFull;
+        this.date = date;
+        this.user = user;
+        this.libraries = libraries;
+    }
+
     public Long getId() {
         return id;
     }

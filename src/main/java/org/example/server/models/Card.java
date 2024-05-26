@@ -10,15 +10,15 @@ public class Card {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Column(nullable = false, length = 50)
+    @Column(nullable = false, length = 25)
     private String value;
 
-    @Column(length = 50)
+    @Column(length = 25)
     private String transcription;
 
     @Column(nullable = false, length = 50)
     private String translation;
-
+    @Column(length = 50)
     private String example;
 
     @ManyToOne

@@ -1,6 +1,7 @@
 package org.example.server.services;
 
 import org.example.server.models.Card;
+import org.example.server.models.Training;
 import org.example.server.models.User;
 import org.example.server.models.UserLibrary;
 import org.example.server.pojo.CardCreateRequest;
@@ -35,7 +36,8 @@ public class CardService {
         User user = userRepository.findByEmail(userEmail).get();
         UserLibrary lib = userLibraryRepository.findById(id).get();
         if (lib.getUser().getId() == user.getId()) {
-            Card c = cardRepository.save(new Card(customReq.getValue(), customReq.getTranscription(), customReq.getTranslation(), customReq.getExample(), lib, null, null));
+            Training newTraining = lib.getTrainings().stream().filter(el -> el.getLevel() == 1).findFirst().get();
+            Card c = cardRepository.save(new Card(customReq.getValue(), customReq.getTranscription(), customReq.getTranslation(), customReq.getExample(), lib, null, newTraining));
             return new CardResponse(c.getId(), c.getValue(), c.getTranscription(), c.getTranslation(), c.getExample());
         }else {
             throw new IllegalAccessException("User have not permission");
@@ -60,7 +62,7 @@ public class CardService {
         }
     }
 
-    public CardResponse updateLib(String userEmail, CardCreateRequest customReq, Long libIid, Long cardId) throws NoSuchElementException, IllegalAccessException {
+    public CardResponse updateCard(String userEmail, CardCreateRequest customReq, Long libIid, Long cardId) throws NoSuchElementException, IllegalAccessException {
         User user = userRepository.findByEmail(userEmail).get();
         UserLibrary lib = userLibraryRepository.findById(libIid).get();
         if (lib.getUser().getId() == user.getId()) {

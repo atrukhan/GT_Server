@@ -17,6 +17,10 @@ public class EntryDate {
     @JoinColumn(name="user_id")
     private User user;
 
+
+    public EntryDate() {
+    }
+
     public EntryDate(Date date, User user) {
         this.date = date;
         this.user = user;

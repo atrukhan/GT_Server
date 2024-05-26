@@ -1,6 +1,7 @@
 package org.example.server.controllers;
 
 import org.example.server.config.jwt.JwtUtils;
+import org.example.server.models.EntryDate;
 import org.example.server.models.enums.ERole;
 import org.example.server.models.Role;
 import org.example.server.models.RefreshToken;
@@ -9,6 +10,7 @@ import org.example.server.pojo.JwtResponse;
 import org.example.server.pojo.LoginRequest;
 import org.example.server.pojo.MessageResponse;
 import org.example.server.pojo.SignupRequest;
+import org.example.server.repositories.EntryDateRepository;
 import org.example.server.repositories.RoleRepository;
 import org.example.server.repositories.RefreshTokenRepository;
 import org.example.server.repositories.UserRepository;
@@ -27,6 +29,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -57,6 +60,9 @@ public class AuthController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private EntryDateRepository entryDateRepository;
+
 
     @PostMapping("/signin")
     public ResponseEntity<?> authUser(@RequestBody LoginRequest req, HttpServletResponse response){
@@ -73,6 +79,9 @@ public class AuthController {
 
         User user = userRepository.findById(userDetails.getId())
                 .orElseThrow(() -> new UsernameNotFoundException("User Not Found with id: " + userDetails.getId()));
+
+        EntryDate entryDate = new EntryDate(new Date(), user);
+        entryDateRepository.save(entryDate);
 
         if(!user.getActivated()){
             return ResponseEntity.badRequest()
