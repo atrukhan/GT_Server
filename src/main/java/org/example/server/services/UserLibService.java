@@ -1,16 +1,10 @@
 package org.example.server.services;
 
-import org.example.server.models.Card;
-import org.example.server.models.DefaultLibrary;
-import org.example.server.models.User;
-import org.example.server.models.UserLibrary;
+import org.example.server.models.*;
 import org.example.server.pojo.CardResponse;
 import org.example.server.pojo.LibResponse;
 import org.example.server.pojo.MessageResponse;
-import org.example.server.repositories.CardRepository;
-import org.example.server.repositories.DefaultLibraryRepository;
-import org.example.server.repositories.UserLibraryRepository;
-import org.example.server.repositories.UserRepository;
+import org.example.server.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -19,6 +13,7 @@ import javax.xml.bind.DatatypeConverter;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -35,6 +30,9 @@ public class UserLibService {
 
     @Autowired
     private CardRepository cardRepository;
+
+    @Autowired
+    private TrainingRepository trainingRepository;
 
     public String generateCode(int libType, long id){
         MessageDigest md = null;
@@ -76,6 +74,13 @@ public class UserLibService {
         UserLibrary lib = userLibraryRepository.save(new UserLibrary(title, "", user));
         lib.setCode(generateCode(1, lib.getId()));
         lib = userLibraryRepository.save(lib);
+
+        Training t1 = new Training(1, 1, false, null, new Date(), lib, null);
+        Training t2 = new Training(3, 2, false, null, new Date(), lib, null);
+        Training t3 = new Training(7, 3, false, null, new Date(), lib, null);
+
+        List<Training> trainings = trainingRepository.saveAll(List.of(t1,t2,t3));
+
         return new LibResponse(lib.getId(), lib.getTitle(), lib.getCode(), 0);
     }
 
@@ -90,10 +95,18 @@ public class UserLibService {
             newLib.setCode(generateCode(1, newLib.getId()));
             UserLibrary newUserLibrary = userLibraryRepository.save(newLib);
 
+            Training t1 = new Training(1, 1, false, null, new Date(), newUserLibrary, null);
+            Training t2 = new Training(3, 2, false, null, new Date(), newUserLibrary, null);
+            Training t3 = new Training(7, 3, false, null, new Date(), newUserLibrary, null);
+
+            List<Training> trainings = trainingRepository.saveAll(List.of(t1,t2,t3));
+
             List<Card> cards = new ArrayList<>();
-            lib.getCards().stream().forEach(el -> cards.add((new Card(el.getValue(), el.getTranscription(), el.getTranslation(), el.getExample(), newUserLibrary, null, null))));
+            lib.getCards().stream().forEach(el -> cards.add((new Card(el.getValue(), el.getTranscription(), el.getTranslation(), el.getExample(), newUserLibrary, null, t1))));
 
             cardRepository.saveAll(cards);
+
+
 
             return new LibResponse(newUserLibrary.getId(), newUserLibrary.getTitle(), newUserLibrary.getCode(), cards.size());
         }catch (NoSuchElementException e){
@@ -107,8 +120,14 @@ public class UserLibService {
             newLib.setCode(generateCode(1, newLib.getId()));
             UserLibrary newUserLibrary = userLibraryRepository.save(newLib);
 
+            Training t1 = new Training(1, 1, false, null, new Date(), newUserLibrary, null);
+            Training t2 = new Training(3, 2, false, null, new Date(), newUserLibrary, null);
+            Training t3 = new Training(7, 3, false, null, new Date(), newUserLibrary, null);
+
+            List<Training> trainings = trainingRepository.saveAll(List.of(t1,t2,t3));
+
             List<Card> cards = new ArrayList<>();
-            lib.getCards().stream().forEach(el -> cards.add((new Card(el.getValue(), el.getTranscription(), el.getTranslation(), el.getExample(), newUserLibrary, null, null))));
+            lib.getCards().stream().forEach(el -> cards.add((new Card(el.getValue(), el.getTranscription(), el.getTranslation(), el.getExample(), newUserLibrary, null, t1))));
 
             cardRepository.saveAll(cards);
 
@@ -123,6 +142,7 @@ public class UserLibService {
         User user = userRepository.findByEmail(userEmail).get();
         UserLibrary lib = userLibraryRepository.findById(id).get();
         if (lib.getUser().getId() == user.getId()) {
+            trainingRepository.deleteAll(lib.getTrainings());
             userLibraryRepository.delete(lib);
             return new LibResponse(lib.getId(), lib.getTitle(), lib.getCode(), lib.getCards().size());
         }else {

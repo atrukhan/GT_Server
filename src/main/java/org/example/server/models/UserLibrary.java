@@ -11,7 +11,7 @@ public class UserLibrary {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Column(length = 50, unique = true, nullable = false)
+    @Column(length = 25, nullable = false)
     private String title;
 
     @Column(length = 32, unique = true, nullable = false)
@@ -19,7 +19,7 @@ public class UserLibrary {
 
 //    @ManyToMany(mappedBy = "libraries")
 //    private List<Card> cards;
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "userLibrary")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "userLibrary", cascade = CascadeType.ALL)
     private List<Card> cards;
     @ManyToOne
     @JoinColumn(name="user_id")
@@ -30,7 +30,7 @@ public class UserLibrary {
 //            inverseJoinColumns = @JoinColumn(name = "user_id"))
 //    private List<User> users;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "library")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "library", cascade = CascadeType.ALL)
     private List<Training> trainings;
 
     public UserLibrary() {

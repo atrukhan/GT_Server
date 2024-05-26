@@ -1,14 +1,8 @@
 package org.example.server.controllers;
 
-import org.example.server.models.Card;
-import org.example.server.models.DefaultLibrary;
-import org.example.server.models.UserLibrary;
-import org.example.server.models.User;
+import org.example.server.models.*;
 import org.example.server.pojo.*;
-import org.example.server.repositories.CardRepository;
-import org.example.server.repositories.DefaultLibraryRepository;
-import org.example.server.repositories.UserLibraryRepository;
-import org.example.server.repositories.UserRepository;
+import org.example.server.repositories.*;
 import org.example.server.services.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,6 +18,7 @@ import javax.xml.bind.DatatypeConverter;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -55,6 +50,11 @@ public class UserController {
 
     @Autowired
     private TrainingService trainingService;
+
+    @Autowired
+    private EntryDateRepository entryDateRepository;
+    @Autowired
+    private TestRepository testRepository;
 
     @Autowired
     private CardService cardService;
@@ -171,6 +171,30 @@ public class UserController {
 
     }
 
+    @PostMapping("/user_lib_card_update/{libId}/{cardId}")
+    @PreAuthorize("hasRole('USER')")
+    public  ResponseEntity<?>  updateUserLibraryCard(@PathVariable("libId") Long libId, @PathVariable("cardId") Long cardId, @RequestBody CardCreateRequest customReq, HttpServletRequest req){
+        try{
+            return ResponseEntity.ok(cardService.updateCard((String) req.getAttribute("email"), customReq, libId, cardId));
+        } catch (NoSuchElementException e){
+            return ResponseEntity.badRequest().body(new MessageResponse("No such library"));
+        } catch (IllegalAccessException e) {
+            return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
+        }
+    }
+
+    @PostMapping("/user_lib_card_delete/{libId}/{cardId}")
+    @PreAuthorize("hasRole('USER')")
+    public  ResponseEntity<?>  deleteUserLibrary(@PathVariable("libId") Long libId, @PathVariable("cardId") Long cardId, HttpServletRequest req){
+        try{
+            return ResponseEntity.ok(cardService.deleteCard((String) req.getAttribute("email"), libId, cardId));
+        } catch (NoSuchElementException e){
+            return ResponseEntity.badRequest().body(new MessageResponse("No such library"));
+        } catch (IllegalAccessException e) {
+            return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
+        }
+    }
+
     @GetMapping("/trainings/{libId}")
     @PreAuthorize("hasRole('USER')")
     public  ResponseEntity<?>  getTrainings(@PathVariable("libId") Long libId, HttpServletRequest req){
@@ -193,6 +217,68 @@ public class UserController {
             return ResponseEntity.badRequest().body(new MessageResponse("No such library"));
         } catch (IllegalAccessException e) {
             return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
+        }
+
+    }
+
+    @PostMapping("/move_card/{trainingId}/{cardId}")
+    @PreAuthorize("hasRole('USER')")
+    public  ResponseEntity<?>  moveTrainingCard(@PathVariable("trainingId") Long trainingId, @PathVariable("cardId") Long cardId, @RequestBody MoveCardRequest customReq, HttpServletRequest req){
+        try {
+            trainingService.moveTrainingCard((String) req.getAttribute("email"), trainingId, cardId, customReq.getUp());
+            return ResponseEntity.ok(null);
+        } catch (NoSuchElementException e){
+            return ResponseEntity.badRequest().body(new MessageResponse("No such library"));
+        } catch (IllegalAccessException e) {
+            return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
+        }
+
+    }
+
+    @GetMapping("/entry_dates")
+    @PreAuthorize("hasRole('USER')")
+    public  ResponseEntity<?>  getEntryDates(HttpServletRequest req){
+        try {
+            User user = userRepository.findByEmail((String) req.getAttribute("email")).get();
+            List<EntryDateResponse> dates = entryDateRepository.findByUser(user).stream().map(el -> new EntryDateResponse(el.getId(), el.getDate())).toList();
+
+            return ResponseEntity.ok(dates);
+        } catch (NoSuchElementException e){
+            return ResponseEntity.badRequest().body(new MessageResponse("No such library"));
+        }
+
+    }
+
+    @PostMapping("/test_cards")
+    @PreAuthorize("hasRole('USER')")
+    public  ResponseEntity<?>  getTestCards( @RequestBody TestCardsRequest customReq, HttpServletRequest req){
+        try {
+            User user = userRepository.findByEmail((String) req.getAttribute("email")).get();
+            List<Card> cards = new ArrayList<>();
+            List<UserLibrary> libs = userLibraryRepository.findAllById(customReq.getIds());
+            for (UserLibrary lib : libs){
+                if(user.getId() == lib.getUser().getId())
+                    cards.addAll(lib.getCards());
+            }
+            List<CardResponse> cardsResponse = cards.stream().map(el -> new CardResponse(el.getId(), el.getValue(), el.getTranscription(), el.getTranslation(), el.getExample())).toList();
+
+            return ResponseEntity.ok(cardsResponse);
+        } catch (NoSuchElementException e){
+            return ResponseEntity.badRequest().body(new MessageResponse("No such element"));
+        }
+
+    }
+
+    @PostMapping("/save_test")
+    @PreAuthorize("hasRole('USER')")
+    public  ResponseEntity<?>  saveTestResult( @RequestBody SaveTestResultRequest customReq, HttpServletRequest req){
+        try {
+            User user = userRepository.findByEmail((String) req.getAttribute("email")).get();
+            List<UserLibrary> libs = userLibraryRepository.findAllById(customReq.getIds());
+            testRepository.save(new Test(customReq.getMistakesCount(), customReq.getCardsCount(), true, new Date(), user, libs));
+            return ResponseEntity.ok(null);
+        } catch (NoSuchElementException e){
+            return ResponseEntity.badRequest().body(new MessageResponse("No such element"));
         }
 
     }
